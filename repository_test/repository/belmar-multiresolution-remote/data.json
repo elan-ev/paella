@@ -23,7 +23,7 @@
 			"sources": {
 				"mp4": [
 					{
-						"src": "https://repository.paellaplayer.upv.es/belmar-multiresolution/media/480-presentation.mp4",
+						"src": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Coffee_Run_-_Blender_Open_Movie-full_movie.webm",
 						"mimetype": "video/mp4",
 						"res": {
 							"w": "640",
@@ -31,7 +31,7 @@
 						}
 					},
 					{
-						"src": "https://repository.paellaplayer.upv.es/belmar-multiresolution/media/720-presentation.mp4",
+						"src": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Coffee_Run_-_Blender_Open_Movie-full_movie.webm",
 						"mimetype": "video/mp4",
 						"res": {
 							"w": "962",
@@ -39,7 +39,7 @@
 						}
 					},
 					{
-						"src": "https://repository.paellaplayer.upv.es/belmar-multiresolution/media/720-presentation.mp4",
+						"src": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Coffee_Run_-_Blender_Open_Movie-full_movie.webm",
 						"mimetype": "video/mp4",
 						"res": {
 							"w": "1442",
