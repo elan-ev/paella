@@ -109,7 +109,7 @@
           "paellaplayer.upv.es"
         ],
         "excludeParentLocations":[
-          "localhost:8000"
+          "elan-ev.github.io/paella"
         ]
       },
       "es.upv.paella.legalPlugin": {
