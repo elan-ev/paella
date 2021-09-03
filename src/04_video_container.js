@@ -724,7 +724,7 @@ class StreamProvider {
 		this._audioStreams = [];
 
 		this._mainPlayer = null;
-		this._audioPlayer = null;
+		this._audioPlayer = [];
 		this._videoPlayers = [];
 		this._audioPlayers = [];
 		this._players = [];
@@ -798,11 +798,8 @@ class StreamProvider {
 
 			if (videoStream==this._mainStream) {
 				this._mainPlayer = player;
-				this._audioPlayer = player;
 			}
-			else {
-				player.setVolume(0);
-			}
+			this._audioPlayer.push(player);
 
 			this._videoPlayers.push(player);
 			this._players.push(player);
@@ -821,7 +818,10 @@ class StreamProvider {
 
 	startVideoSync(syncProviderPlayer) {
 		this._syncProviderPlayer = syncProviderPlayer;
-		this._audioPlayer = syncProviderPlayer; // The player that provides the synchronization is also used as main audio player.
+		if (this._audioPlayer.indexOf(syncProviderPlayer) < 0) {
+			 // Add the player that provides the synchronization as audio player if it is not already in the list
+			this._audioPlayer.push(syncProviderPlayer);
+		}
 		this.stopVideoSync();
 		
 		console.debug("Start sync to player:");
@@ -941,7 +941,7 @@ class StreamProvider {
 	}
 
 	get mainAudioPlayer() {
-		return this._audioPlayer;
+		return this._audioPlayer[0];
 	}
 
 	get mainPlayer() {
@@ -1019,7 +1019,7 @@ class VideoContainer extends paella.VideoContainerBase {
 
 		this._audioTag = paella.player.config.player.defaultAudioTag ||
 						 paella.dictionary.currentLanguage();
-		this._audioPlayer = null;
+		this._audioPlayer = [];
 
 		// Initial volume level
 		this._volume = paella.utils.cookies.get("volume") ? Number(paella.utils.cookies.get("volume")) : 1;
@@ -1120,22 +1120,26 @@ class VideoContainer extends paella.VideoContainerBase {
 	mute() {
 		return new Promise((resolve) => {
 			this._muted = true;
-			this._audioPlayer.setVolume(0)
+			for (const player of this._audioPlayer) {
+				player.setVolume(0)
 				.then(() => {
 					paella.events.trigger(paella.events.setVolume, { master: 0 });
 					resolve();
 				});
+			}
 		});
 	}
 
 	unmute() {
 		return new Promise((resolve) => {
 			this._muted = false;
-			this._audioPlayer.setVolume(this._volume)
+			for (const player of this._audioPlayer) {
+				player.setVolume(this._volume)
 				.then(() => {
 					paella.events.trigger(paella.events.setVolume, { master: this._volume });
 					resolve();
 				});
+			}
 		});
 	}
 
@@ -1155,7 +1159,8 @@ class VideoContainer extends paella.VideoContainerBase {
 			return new Promise((resolve,reject) => {
 				paella.utils.cookies.set("volume",params);
 				this._volume = params;
-				this._audioPlayer.setVolume(params)
+				for (const player of this._audioPlayer) {
+					player.setVolume(params)
 					.then(() => {
 						paella.events.trigger(paella.events.setVolume, { master:params });
 						resolve(params);
@@ -1163,12 +1168,13 @@ class VideoContainer extends paella.VideoContainerBase {
 					.catch((err) => {
 						reject(err);
 					});
+				}
 			});
 		}
 	}
 
 	volume() {
-		return this._audioPlayer.volume();
+		return this._audioPlayer[0].volume();
 	}
 
 	duration(ignoreTrimming = false) {
@@ -1243,7 +1249,7 @@ class VideoContainer extends paella.VideoContainerBase {
 	}
 
 	get audioPlayer() {
-		return this._audioPlayer;
+		return this._audioPlayer[0];
 	}
 
 	getAudioTags() {
@@ -1262,35 +1268,14 @@ class VideoContainer extends paella.VideoContainerBase {
 	setAudioTag(lang) {
 		this.streamProvider.stopVideoSync();
 		return new Promise((resolve) => {
-			let audioSet = false;
-			let firstAudioPlayer = null;
 			let promises = [];
-			this.streamProvider.players.forEach((player) => {
-				if (!firstAudioPlayer) {
-					firstAudioPlayer = player;
-				}
-
-				if (!audioSet && player.stream.audioTag==lang) {
-					audioSet = true;
-					this._audioPlayer = player;
-				}
-				promises.push(player.setVolume(0));
-			});
-
-			// NOTE: The audio only streams must define a valid audio tag
-			if (!audioSet && this.streamProvider.mainVideoPlayer) {
-				this._audioPlayer = this.streamProvider.mainVideoPlayer;
-			}
-			else if (!audioSet && firstAudioPlayer) {
-				this._audioPlayer = firstAudioPlayer;
+			this._audioPlayer = this.streamProvider.players;
+			for (const player of this._audioPlayer) {
+				promises.push(player.setVolume(this._volume));
 			}
 
 			Promise.all(promises).then(() => {
-				return this._audioPlayer.setVolume(this._volume);
-			})
-
-			.then(() => {
-				this._audioTag = this._audioPlayer.stream.audioTag;
+				this._audioTag = this._audioPlayer[0].stream.audioTag;
 				paella.events.trigger(paella.events.audioTagChanged);
 				this.streamProvider.startVideoSync(this.audioPlayer);
 				resolve();
